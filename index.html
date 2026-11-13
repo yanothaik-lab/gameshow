@@ -159,6 +159,13 @@ body{padding-bottom:170px}
 #gbar #gp{font-weight:700;color:var(--mute);min-width:90px;text-align:center;font-size:14px}
 @media(max-width:760px){body{display:flex;flex-direction:column}#gbar{position:sticky;order:-1;top:4px;right:auto;margin-bottom:8px;align-self:stretch}#gbar #gp{min-width:70px}#gbar #gs{display:none}}
 .tctl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0}.tctl span{font-weight:800;min-width:130px}
+
+.bonus{margin:8px auto;padding:10px 18px;border-radius:14px;background:linear-gradient(90deg,#ffb020,#ff6b6b);color:#1a1a1a;font-weight:800;font-size:1.25em;text-align:center;animation:bpop .6s ease-out}
+@keyframes bpop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+.twist{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border:2px dashed var(--gold);border-radius:14px;padding:10px 14px;margin:8px 0;background:rgba(255,200,60,.08)}
+.twist .ti{font-size:2em}.twist>div{flex:1;min-width:200px}
+.gcount{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:4px 0 8px}
+.gcount .btn.sm{min-width:42px}
 #gbar i{width:2px;height:26px;background:var(--line)}
 </style>
 <div class="wrap" id="app"></div>
@@ -519,16 +526,17 @@ function confetti(){const c=$('#fx'),x=c.getContext('2d');c.width=innerWidth;c.h
  let n=0;(function f(){x.clearRect(0,0,c.width,c.height);P.forEach(p=>{p.vy+=.45;p.x+=p.vx;p.y+=p.vy;p.a+=.2;x.fillStyle=p.c;x.save();x.translate(p.x,p.y);x.rotate(p.a);x.fillRect(-p.r,-p.r/2,p.r*2,p.r);x.restore()});if(++n<100)requestAnimationFrame(f);else x.clearRect(0,0,c.width,c.height)})()}
 /* ---- state ---- */
 let S=null,cp=1,ph=0,sl=0,gi=0,tmr=null,ST={};
-let H={qi:0,who:null,spun:[],show:false,pass:false,pk:null,lines:[]};
+let H;
+const newH=()=>({qi:(S&&S.qo&&S.qo[cp])||0,who:null,show:false,pass:false,pk:null,lines:[],bonus:false});
 const CLASSES=['SMTE6','SM6-1','SM6-2','EMEC6','IABHT6','TS6','BHT6-2'];
 let CUR=CLASSES[0],ALL={};
-const freshS=()=>({teams:['กลุ่ม 1','กลุ่ม 2','กลุ่ม 3','กลุ่ม 4','กลุ่ม 5','กลุ่ม 6'],solo:['ผู้เล่น 1','ผู้เล่น 2','ผู้เล่น 3','ผู้เล่น 4','ผู้เล่น 5','ผู้เล่น 6'],mode:'group',n:6,used:[],roster:[],sc:{}});
+const freshS=()=>({teams:['กลุ่ม 1','กลุ่ม 2','กลุ่ม 3','กลุ่ม 4','กลุ่ม 5','กลุ่ม 6'],solo:['ผู้เล่น 1','ผู้เล่น 2','ผู้เล่น 3','ผู้เล่น 4','ผู้เล่น 5','ผู้เล่น 6'],mode:'group',n:6,used:[],roster:[],sc:{},spun:[],qo:{}});
 const fixS=x=>{const f=freshS();Object.keys(f).forEach(k=>{if(x[k]==null)x[k]=f[k]});return x};
 function load(){let d=null;try{d=JSON.parse(store.get('cls33104c')||'null')}catch(e){}
   if(d&&d.d){ALL=d.d;CUR=CLASSES.includes(d.cur)?d.cur:CLASSES[0]}else{ALL={};CUR=CLASSES[0]}
   S=fixS(ALL[CUR]&&ALL[CUR].teams?ALL[CUR]:freshS());ALL[CUR]=S}
 function save(){ALL[CUR]=S;store.set('cls33104c',JSON.stringify({cur:CUR,d:ALL}))}
-function switchClass(c){save();CUR=c;S=fixS(ALL[c]&&ALL[c].teams?ALL[c]:freshS());ALL[c]=S;ST={};H={qi:0,who:null,spun:[],show:false,pass:false,pk:null,lines:[]};save();render()}
+function switchClass(c){save();CUR=c;S=fixS(ALL[c]&&ALL[c].teams?ALL[c]:freshS());ALL[c]=S;ST={};H=newH();save();render()}
 function sc(p){p=p||cp;if(!S.sc[p])S.sc[p]={t:[0,0,0,0,0,0],i:{}};if(!S.sc[p].s)S.sc[p].s=[0,0,0,0,0,0];return S.sc[p]}
 const NM=()=>(S.mode==='solo'?S.solo:S.teams).slice(0,S.n||6);
 const TS=()=>sc()[S.mode==='solo'?'s':'t'];
@@ -545,7 +553,7 @@ function renderDock(){
 }
 function head(){
   const tabs=Array.from({length:13},(_,i)=>i+1).map(n=>`<button class="tab" role="tab" aria-selected="${n===cp}" data-p="${n}" ${PERIODS[n]?'':'disabled title="กำลังจัดทำ"'}>${n}</button>`).join('');
-  return `<div class="top"><div><h1>ห้องเรียนเกมโชว์ ส33104</h1><p class="sub">ประวัติศาสตร์สากล ม.6 • ห้อง ${CUR} • คาบ ${cp}: ${esc(P().title)}</p></div><div class="row"><label class="clsel">ห้อง <select id="cls" aria-label="เลือกห้องเรียน">${CLASSES.map(c=>`<option ${c===CUR?'selected':''}>${c}</option>`).join('')}</select></label><label class="clsel">โหมด <select id="qmd" aria-label="โหมด"><option value="group" ${S.mode==='group'?'selected':''}>กลุ่ม</option><option value="solo" ${S.mode==='solo'?'selected':''}>เดี่ยว</option></select></label><label class="clsel">จำนวน <select id="qnn" aria-label="จำนวน">${[2,3,4,5,6].map(v=>`<option ${v===S.n?'selected':''}>${v}</option>`).join('')}</select></label>${S.mode==='solo'?'<button class="btn sm" id="bdraw">🎲 สุ่มผู้เล่นชุดใหม่</button>':''}<button class="btn sm" id="bsum">สรุปคะแนนทั้งห้อง</button><button class="btn sm" id="bsnd">เสียง: ${sound?'เปิด':'ปิด'}</button><button class="btn sm" id="bset">ตั้งค่า / รายชื่อ</button></div></div>
+  return `<div class="top"><div><h1>ห้องเรียนเกมโชว์ ส33104</h1><p class="sub">ประวัติศาสตร์สากล ม.6 • ห้อง ${CUR} • คาบ ${cp}: ${esc(P().title)}</p></div><div class="row"><label class="clsel">ห้อง <select id="cls" aria-label="เลือกห้องเรียน">${CLASSES.map(c=>`<option ${c===CUR?'selected':''}>${c}</option>`).join('')}</select></label><label class="clsel">โหมด <select id="qmd" aria-label="โหมด"><option value="group" ${S.mode==='group'?'selected':''}>กลุ่ม</option><option value="solo" ${S.mode==='solo'?'selected':''}>เดี่ยว</option></select></label><label class="clsel">จำนวน${S.mode==='solo'?'ผู้เล่น':'กลุ่ม'} <select id="qnn" aria-label="จำนวน">${[2,3,4,5,6].map(v=>`<option ${v===S.n?'selected':''}>${v}</option>`).join('')}</select></label>${S.mode==='solo'?'<button class="btn sm" id="bdraw">🎲 สุ่มผู้เล่นชุดใหม่</button>':''}<button class="btn sm" id="bsum">สรุปคะแนนทั้งห้อง</button><button class="btn sm" id="bsnd">เสียง: ${sound?'เปิด':'ปิด'}</button><button class="btn sm" id="bset">ตั้งค่า / รายชื่อ</button></div></div>
   <div class="tabs" role="tablist" aria-label="เลือกคาบ">${tabs}</div>
   <div class="steps">${flowOf(P()).map((f,i)=>`<button class="step ${i<ph?'done':''}" data-ph="${i}" ${i===ph?'aria-current="step"':''}><small>${i+1} • ${f[1]} นาที</small><b>${esc(f[0])}</b></button>`).join('')}</div>`;
 }
@@ -554,7 +562,7 @@ function render(){
   let body='';
   if(ph===0)body=viewHook();else if(ph===1)body=viewLesson();else if(ph===2)body=viewHot();else if(ph===3)body=viewGames();else body=viewWrap();
   $('#app').innerHTML=head()+body;
-  document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{cp=+b.dataset.p;ph=0;sl=0;gi=0;ST={};H={qi:0,who:null,spun:[],show:false,pass:false,pk:null,lines:[]};render()});
+  document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{cp=+b.dataset.p;ph=0;sl=0;gi=0;ST={};H=newH();render()});
   document.querySelectorAll('.step').forEach(b=>b.onclick=()=>{ph=+b.dataset.ph;render()});
   $('#cls').onchange=e=>switchClass(e.target.value);$('#bsum').onclick=openSummary;$('#qmd').onchange=e=>applyCfg(e.target.value,S.n);$('#qnn').onchange=e=>applyCfg(S.mode,+e.target.value);if($('#bdraw'))$('#bdraw').onclick=drawPlayers;$('#bsnd').onclick=()=>{sound=!sound;render()};$('#bset').onclick=openSettings;
   wire();renderDock();applyZoom();updBar();
@@ -578,26 +586,30 @@ function viewHot(){const I=P().ind,hq=I.q,q=hq[H.qi%hq.length],n=S.roster.length
   if(H.who){
     if(I.mode==='mcq'){const lost=H.lines||[];qbody=`<p class="q">${esc(q[0])}</p><div class="mo">${q[1].map((o,i)=>`<div class="o ${H.show&&i===q[2]?'right':''} ${lost.includes(i)?'gone':''}">${'ก ข ค ง'.split(' ')[i]}. ${esc(o)}</div>`).join('')}</div>${H.show?`<div class="ans">${esc(q[3]||'')}</div>`:''}`}
     else qbody=`<p class="q">${esc(q[0])}</p>${H.show?`<div class="ans">${esc(q[1])}</div>`:''}`;
-    qbody+=H.show?`<div class="row"><button class="btn ok big" id="hy">ตอบถูก +1</button><button class="btn no big" id="hn">ยังไม่ถูก</button>${I.mode==='pass'&&!H.pass?'<button class="btn big" id="hp">ส่งต่อเพื่อน</button>':''}</div>`
-      :`<div class="row"><button class="btn gold big" id="hs">ดูเฉลย</button>${I.mode==='mcq'&&!(H.lines&&H.lines.length)?'<button class="btn big" id="h50">ตัดช้อยส์ 2 ข้อ (ใช้ได้ครั้งเดียว)</button>':''}${I.mode==='pass'&&!H.pass?'<button class="btn big" id="hp">ส่งต่อเพื่อน</button>':''}</div>`;
+    qbody+=H.show?`<div class="row"><button class="btn ok big" id="hy">ตอบถูก +${H.bonus?2:1}</button><button class="btn no big" id="hn">ยังไม่ถูก</button>${I.mode==='pass'&&!H.pass?'<button class="btn big" id="hp">ส่งต่อเพื่อน</button>':''}</div>`
+      :`<div class="row"><button class="btn gold big" id="hs">ดูเฉลย</button><button class="btn big" id="hrd">🔄 คนนี้ไม่อยู่/ไม่ตอบ สุ่มคนใหม่ (ข้อเดิม)</button>${I.mode==='mcq'&&!(H.lines&&H.lines.length)?'<button class="btn big" id="h50">ตัดช้อยส์ 2 ข้อ (ใช้ได้ครั้งเดียว)</button>':''}${I.mode==='pass'&&!H.pass?'<button class="btn big" id="hp">ส่งต่อเพื่อน</button>':''}</div>`;
   }
-  return `<div class="stage hot"><div class="kick">${esc(I.name)} • ตอบเดี่ยว ถูกได้ 1 คะแนนส่วนตัว และ 1 คะแนนให้กลุ่ม</div>${rule('กติกา',I.rule)}
+  return `<div class="stage hot">${gcount()}<div class="kick">${esc(I.name)} • ตอบเดี่ยว ถูกได้ 1 คะแนนส่วนตัว และ 1 คะแนนให้กลุ่ม</div>${rule('กติกา',I.rule)}
   <div class="pick" id="pick">${H.who?esc(H.who.n)+(H.who.g?` <span style="font-size:.4em;color:var(--mute)">กลุ่ม ${H.who.g}</span>`:''):'พร้อมไหม?'}</div>
+  ${H.who&&H.bonus?'<div class="bonus">⭐ เลขที่โชคดี! ตอบถูกได้ x2</div>':''}
   ${H.who?(I.mode==='flash'&&!H.show?'<div class="mtimer" style="width:100%"><i id="fb"></i></div>':'')+qbody:`<div class="row"><button class="btn gold big" id="spin">สุ่มนักเรียน</button></div>${n?'':`<div class="row"><label class="f">สุ่มจากเลขที่ 1 ถึง<input type="number" id="nn" value="${S.nn||40}" min="1" max="50" style="width:100px"></label><label class="f">เลขที่ที่ขาด (ไม่สุ่ม)<input type="text" id="nab" value="${esc(S.absent||'')}" placeholder="เช่น 3, 12, 25" style="width:170px"></label></div><p class="hint">ตั้งจำนวนได้ 1–50 ระบบสุ่มไม่ซ้ำจนครบทุกคนก่อนวนรอบใหม่</p>`}`}
-  <p class="hint">ข้อ ${H.qi%hq.length+1}/${hq.length} • สุ่มแล้ว ${H.spun.length} คน</p>${nextBtn('ไปเกมทีม')}</div>`}
+  <p class="hint">ข้อ ${H.qi%hq.length+1}/${hq.length} • สุ่มแล้ว ${(S.spun||[]).length}/${pool().length} คน <button class="btn sm" id="hrs">เริ่มรอบสุ่มใหม่</button></p>${nextBtn('ไปเกมทีม')}</div>`}
 const absSet=()=>new Set(String(S.absent||'').split(/[^0-9]+/).filter(Boolean).map(Number));
 function pool(){if(S.roster.length)return S.roster;const nn=Math.min(50,Math.max(1,S.nn||40)),ab=absSet();const a=Array.from({length:nn},(_,i)=>i+1).filter(i=>!ab.has(i)).map(i=>({n:'เลขที่ '+i,g:0}));return a.length?a:[{n:'เลขที่ 1',g:0}]}
-function pickOne(done){const pl=pool();let left=pl.filter(p=>!H.spun.includes(p.n));if(!left.length){H.spun=[];left=pl}
-  const win=left[Math.random()*left.length|0];let k=0;const iv=setInterval(()=>{const r=pl[Math.random()*pl.length|0];const e=$('#pick');if(e)e.textContent=r.n;snd.pick();if(++k>16){clearInterval(iv);H.who=win;H.spun.push(win.n);done()}},70)}
-function wireHot(){
+function pickOne(done){const pl=pool();S.spun=S.spun||[];let left=pl.filter(p=>!S.spun.includes(p.n));
+  if(!left.length){const last=S.spun[S.spun.length-1];S.spun=[];left=pl.filter(p=>p.n!==last);if(!left.length)left=pl}
+  const win=left[Math.random()*left.length|0];let k=0;const iv=setInterval(()=>{const r=pl[Math.random()*pl.length|0];const e=$('#pick');if(e)e.textContent=r.n;snd.pick();if(++k>16){clearInterval(iv);H.who=win;H.bonus=Math.random()<0.2;S.spun.push(win.n);save();done()}},70)}
+function wireHot(){document.querySelectorAll('[data-gn]').forEach(b=>b.onclick=()=>applyCfg(S.mode,+b.dataset.gn));
   const I=P().ind;
   const sp=$('#spin');
-  if(sp)sp.onclick=()=>{const n=$('#nn');if(n){S.nn=Math.min(50,Math.max(1,+n.value||40));const a=$('#nab');if(a)S.absent=a.value;H.spun=[];save()}sp.disabled=true;pickOne(()=>{H.show=false;H.pass=false;H.lines=[];render();if(I.mode==='flash')startFlash()})};
+  if(sp)sp.onclick=()=>{const n=$('#nn');if(n){const o1=S.nn,o2=S.absent||'';S.nn=Math.min(50,Math.max(1,+n.value||40));const a=$('#nab');if(a)S.absent=a.value;if(o1!==S.nn||o2!==(S.absent||''))S.spun=[];save()}sp.disabled=true;pickOne(()=>{H.show=false;H.pass=false;H.lines=[];render();if(I.mode==='flash')startFlash()})};
   const hs=$('#hs');if(hs)hs.onclick=()=>{H.show=true;clearInterval(tmr);render()};
   const h50=$('#h50');if(h50)h50.onclick=()=>{const q=I.q[H.qi%I.q.length];const wrong=shuffle([0,1,2,3].filter(i=>i!==q[2])).slice(0,2);H.lines=wrong;render()};
   const hp=$('#hp');if(hp)hp.onclick=()=>{H.pass=true;H.show=false;pickOne(()=>{render()})};
-  const nxt=()=>{H.qi++;H.who=null;H.show=false;H.pass=false;H.lines=[];render()};
-  const hy=$('#hy');if(hy)hy.onclick=()=>{addI(H.who.n,1);if(H.who.g)addT(H.who.g-1,1);snd.ok();confetti();nxt()};
+  const nxt=()=>{H.qi++;S.qo=S.qo||{};S.qo[cp]=H.qi;save();H.who=null;H.show=false;H.pass=false;H.lines=[];H.bonus=false;render()};
+  const hrd=$('#hrd');if(hrd)hrd.onclick=()=>{clearInterval(tmr);H.show=false;H.pass=false;H.lines=[];hrd.disabled=true;pickOne(()=>{render();if(I.mode==='flash')startFlash()})};
+  const hrs=$('#hrs');if(hrs)hrs.onclick=()=>{S.spun=[];save();render()};
+  const hy=$('#hy');if(hy)hy.onclick=()=>{const pt=H.bonus?2:1;addI(H.who.n,pt);if(H.who.g)addT(H.who.g-1,pt);snd.ok();confetti();nxt()};
   const hn=$('#hn');if(hn)hn.onclick=()=>{snd.bad();nxt()};
   if(I.mode==='flash'&&H.who&&!H.show)startFlash();
 }
@@ -615,9 +627,20 @@ function runTimer(sec){const w=$('.mtimer');if(!w)return;clearInterval(tmr);TM={
   let last=Math.ceil(sec);paintT();
   tmr=setInterval(()=>{if(TM.paused||TM.left<=0)return;TM.left=Math.max(0,TM.left-.1);const k=Math.ceil(TM.left);if(k!==last){last=k;if(k<=5&&k>0)snd.tick()}paintT();if(TM.left<=0){clearInterval(tmr);snd.bad()}},100)}
 /* ---- phase 4: team games ---- */
+const TW=[
+ ['⚡','ดับเบิลพอยท์','รอบนี้ตอบถูกได้คะแนน x2 (ครูกดปุ่ม + เพิ่มเอง)'],
+ ['🕵️','ขโมยคะแนน','ทีมที่ตอบถูกก่อน เลือกขโมย 1 คะแนนจากทีมอื่นได้ 1 ครั้ง'],
+ ['🤫','เงียบกริบ','ทุกทีมเขียนคำตอบลงกระดาษพร้อมกัน แล้วชูพร้อมกัน ห้ามพูดหรือส่งสัญญาณ'],
+ ['🆘','ผู้ช่วยชีวิต','แต่ละทีมขอคำใบ้จากครูได้ 1 ครั้ง แต่คะแนนข้อนั้นเหลือครึ่งเดียว'],
+ ['🎯','ผิดเสีย','ตอบผิดเสีย 1 คะแนน ต้องคิดให้ดีก่อนตอบ'],
+ ['🔁','ถามกลับ','ทีมที่ตอบถูก ตั้งคำถามกลับจากเนื้อหาวันนี้ให้ทีมอื่นตอบ ถ้าตอบไม่ได้ได้ +1'],
+ ['⏱️','เร็วที่สุดชนะ','ทีมที่ยกมือเร็วที่สุดมีสิทธิ์ตอบ ถ้าผิดทีมอื่นแย่งตอบได้'],
+ ['🎁','กล่องปริศนา','ครูเลือกข้อลับ 1 ข้อ ทีมที่ตอบถูกข้อนั้นได้โบนัส +2 โดยไม่บอกล่วงหน้า']];
+function twistCard(){const k=(ST['tw'+gi]!=null?ST['tw'+gi]:(cp*3+gi*5)%TW.length),t=TW[k];return `<div class="twist"><span class="ti">${t[0]}</span><div><b>กติกาพิเศษ: ${t[1]}</b><br>${esc(t[2])}</div><button class="btn sm" id="twr">🎲 สุ่มกติกาใหม่</button></div>`}
+function gcount(){const lab=S.mode==='solo'?'ผู้เล่น':'กลุ่ม';return `<div class="gcount"><b>จำนวน${lab}:</b> ${[2,3,4,5,6].map(v=>`<button class="btn sm ${v===S.n?'gold':''}" data-gn="${v}">${v}</button>`).join('')}</div>`}
 function viewGames(){const G=P().games,g=G[gi];
   const tabs=G.length>1?`<div class="gtabs" role="tablist">${G.map((x,i)=>`<button class="gtab" role="tab" aria-selected="${i===gi}" data-g="${i}">${esc(x.name)}</button>`).join('')}</div>`:'';
-  return `<div class="stage">${tabs}<div class="kick">เกมทีม • ${esc(g.name)}</div>${rule('กติกา',g.rule)}<div id="eng">${ENG[g.type].render(g,gst())}</div>${nextBtn('สรุปและคะแนน')}</div>`}
+  return `<div class="stage">${gcount()}${tabs}${twistCard()}<div class="kick">เกมทีม • ${esc(g.name)}</div>${rule('กติกา',g.rule)}<div id="eng">${ENG[g.type].render(g,gst())}</div>${nextBtn('สรุปและคะแนน')}</div>`}
 function chips(sel,fn,opt){opt=opt||{};return `<div class="chips">${NM().map((n,i)=>`<button class="chipb ${sel&&sel[i]?'on':''}" style="--c:${TCH[i]}" data-ci="${i}" ${opt.dis&&opt.dis[i]?'disabled':''}>${esc(n)}${opt.pts!=null?'<br>+'+opt.pts:''}</button>`).join('')}</div>`}
 function reEng(){const g=P().games[gi];if(!$('#eng'))return;$('#eng').innerHTML=ENG[g.type].render(g,gst());ENG[g.type].wire(g,gst())}
 const ENG={};
@@ -758,7 +781,7 @@ ENG.decide={render(g,st){st.r=st.r||0;st.ch=st.ch||NM().map(()=>null);st.ap=st.a
   document.querySelectorAll('[data-tc]').forEach(b=>b.onclick=()=>{st.ch[+b.dataset.tc]=+b.dataset.o;reEng()});
   $('#rv').onclick=()=>{st.rev=true;NM().forEach((n,i)=>{if(st.ch[i]!=null&&!st.ap[st.r+':'+i]){st.ap[st.r+':'+i]=1;addT(i,rd.o[st.ch[i]].p)}});snd.ok();reEng()};
   $('#nx').onclick=()=>{st.r++;st.rev=false;st.ch=NM().map(()=>null);reEng()}}};
-function wireGames(){const g=P().games[gi];ENG[g.type].wire(g,gst());document.querySelectorAll('.gtab[data-g]').forEach(b=>b.onclick=()=>{gi=+b.dataset.g;render()})}
+function wireGames(){const g=P().games[gi];const tw=$('#twr');if(tw)tw.onclick=()=>{let k=Math.random()*TW.length|0;const cur=ST['tw'+gi]!=null?ST['tw'+gi]:(cp*3+gi*5)%TW.length;if(k===cur)k=(k+1)%TW.length;ST['tw'+gi]=k;snd.pick();render()};document.querySelectorAll('[data-gn]').forEach(b=>b.onclick=()=>applyCfg(S.mode,+b.dataset.gn));ENG[g.type].wire(g,gst());document.querySelectorAll('.gtab[data-g]').forEach(b=>b.onclick=()=>{gi=+b.dataset.g;render()})}
 /* ---- phase 5 ---- */
 function totals(){return NM().map((n,i)=>({n,i,p:TS()[i],all:Object.values(S.sc).reduce((a,x)=>a+((x[S.mode==='solo'?'s':'t']||[])[i]||0),0)}))}
 function viewWrap(){const T=totals().sort((a,b)=>b.p-a.p),mx=Math.max(1,...T.map(x=>x.p));
@@ -800,7 +823,7 @@ function openSettings(){
   $('#sv').onclick=()=>{const md=$('#smd').value,n=+$('#snn').value;const key=S.mode==='solo'?'solo':'teams',lab=S.mode==='solo'?'ผู้เล่น ':'กลุ่ม ';
     S[key]=S[key].map((x,i)=>{const e=$('#tn'+i);return e?((e.value||'').trim()||(lab+(i+1))):x});
     S.roster=$('#ros').value.split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(l=>{const m=l.match(/^(.*?)[,，]\s*(\d)\s*$/);return m?{n:m[1].trim(),g:+m[2]}:{n:l,g:0}});
-    S.nn=Math.min(50,Math.max(1,+($('#snum').value)||40));S.absent=$('#sab').value;H.spun=[];
+    {const o1=S.nn,o2=S.absent||'';S.nn=Math.min(50,Math.max(1,+($('#snum').value)||40));S.absent=$('#sab').value;if(o1!==S.nn||o2!==S.absent)S.spun=[]}
     S.mode=md;S.n=n;ST={};save();closeM();render()};
 }
 function wire(){
@@ -819,7 +842,7 @@ function wire(){
 function steps(){const p=P(),a=[[0,0,0]];p.slides.forEach((_,i)=>a.push([1,i,0]));a.push([2,0,0]);p.games.forEach((_,i)=>a.push([3,0,i]));a.push([4,0,0]);return a}
 function idx(){const a=steps();const k=a.findIndex(x=>x[0]===ph&&(ph!==1||x[1]===sl)&&(ph!==3||x[2]===gi));return k<0?0:k}
 function setStep(x){ph=x[0];sl=x[1];gi=x[2];render();window.scrollTo(0,0)}
-function resetP(n){cp=n;ph=0;sl=0;gi=0;ST={};H={qi:0,who:null,spun:[],show:false,pass:false,pk:null,lines:[]}}
+function resetP(n){cp=n;ph=0;sl=0;gi=0;ST={};H=newH()}
 function fwd(){const a=steps(),k=idx();if(k<a.length-1)setStep(a[k+1]);else if(PERIODS[cp+1]){resetP(cp+1);render();window.scrollTo(0,0)}}
 function back(){const a=steps(),k=idx();if(k>0)setStep(a[k-1]);else if(PERIODS[cp-1]){resetP(cp-1);const b=steps();setStep(b[b.length-1])}}
 let ZM=1,FIT=true;try{ZM=+store.get('cls_zm')||1}catch(e){}
@@ -832,7 +855,7 @@ function buildBar(){const b=document.createElement('div');b.id='gbar';b.innerHTM
   if(e.key==='ArrowRight'||e.key==='PageDown'){e.preventDefault();fwd()}else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();back()}else if(e.key==='f'||e.key==='F'){fs()}});
  addEventListener('resize',applyZoom)}
 function updBar(){const a=steps(),k=idx(),p=$('#gp');if(p)p.textContent='คาบ '+cp+' • '+(k+1)+'/'+a.length;const f=$('#gf');if(f)f.disabled=(k===a.length-1&&!PERIODS[cp+1])}
-function init(){load();buildBar();render()}
+function init(){load();H=newH();buildBar();render()}
 
 init();
 </script>
